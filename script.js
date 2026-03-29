@@ -153,6 +153,7 @@ const dateText = document.getElementById("dateText");
 const quoteCard = document.getElementById("quoteCard");
 const quoteText = document.getElementById("quoteText");
 const quoteSource = document.getElementById("quoteSource");
+const searchPanel = document.getElementById("searchSection");
 const searchForm = document.getElementById("searchForm");
 const searchInput = document.getElementById("searchInput");
 const quickLinksGrid = document.getElementById("quickLinksGrid");
@@ -186,6 +187,9 @@ let engineSegmentControl;
 let pageDragState = null;
 let mascotReactionTimer = 0;
 let mascotTalkingTimer = 0;
+let searchInputFeedbackTimer = 0;
+let previousSearchValue = "";
+let pendingSearchFeedbackType = "typing";
 
 const MASCOT_LINES = [
   "先搜索，再动手。",
@@ -554,6 +558,37 @@ function handleSearch(event) {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
+function triggerSearchInputFeedback() {
+  searchPanel.classList.remove("is-typing");
+  searchPanel.classList.remove("is-deleting");
+  searchPanel.classList.remove("is-strong-typing");
+  void searchPanel.offsetWidth;
+  const currentValue = searchInput.value;
+  const isDeleting = currentValue.length < previousSearchValue.length;
+  const feedbackType =
+    pendingSearchFeedbackType === "strong"
+      ? "is-strong-typing"
+      : isDeleting
+        ? "is-deleting"
+        : "is-typing";
+
+  searchPanel.classList.add(feedbackType);
+  previousSearchValue = currentValue;
+  pendingSearchFeedbackType = "typing";
+  window.clearTimeout(searchInputFeedbackTimer);
+  searchInputFeedbackTimer = window.setTimeout(() => {
+    searchPanel.classList.remove("is-typing");
+    searchPanel.classList.remove("is-deleting");
+    searchPanel.classList.remove("is-strong-typing");
+  }, feedbackType === "is-strong-typing" ? 250 : isDeleting ? 230 : 190);
+}
+
+function markStrongSearchFeedback(event) {
+  if (event.key === " " || event.code === "Space" || event.key === "Enter") {
+    pendingSearchFeedbackType = "strong";
+  }
+}
+
 function createRipple(event) {
   const host = event.currentTarget;
   const nearestHost = event.target.closest(".ripple-host");
@@ -897,6 +932,8 @@ railDots.forEach((button) => {
   button.addEventListener("click", () => scrollToSection(button.dataset.target));
 });
 searchForm.addEventListener("submit", handleSearch);
+searchInput.addEventListener("keydown", markStrongSearchFeedback);
+searchInput.addEventListener("input", triggerSearchInputFeedback);
 quoteCard.addEventListener("click", renderQuote);
 quoteCard.addEventListener("keydown", (event) => handleInteractiveKeydown(event, renderQuote));
 timeCard.addEventListener("click", () => {
