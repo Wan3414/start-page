@@ -190,14 +190,49 @@ let mascotTalkingTimer = 0;
 let searchInputFeedbackTimer = 0;
 let previousSearchValue = "";
 let pendingSearchFeedbackType = "typing";
+let mascotLines = [];
 
-const MASCOT_LINES = [
-  "先搜索，再动手。",
-  "今天也别切太碎。",
-  "推进一点就是前进。",
-  "先把主线做完。",
-  "我在右下角陪你。",
-  "点我会有反应。",
+const FALLBACK_MASCOT_LINES = [
+  "请对社恐角色温柔一点。",
+  "低气压加载中……",
+  "当前状态：想躲起来。",
+  "别看我，我会死机。",
+  "今天能正常呼吸就算成功。",
+  "我没有消失，我只是在角落待机。",
+  "请不要突然和我说话，我会重启。",
+  "表情管理失败中。",
+  "正在尝试成为不那么奇怪的人。",
+  "小小地努力一下，应该可以吧。",
+  "今天也努力活得不那么显眼……",
+  "只要没人注意到我，今天就是胜利。",
+  "虽然很想逃跑，但还是再坚持一下吧。",
+  "社交什么的，果然还是太难了。",
+  "要是能用吉他说话就好了。",
+  "表面平静，内心已经大地震了。",
+  "我这种人，真的也能站上舞台吗？",
+  "只要不出错，就已经很了不起了。",
+  "明明还没开始，怎么就已经紧张了。",
+  "大家都好耀眼……我先躲一下。",
+  "如果能被稍微认可一点就好了。",
+  "脑子里排练了一百遍，开口还是失败。",
+  "今天的我，姑且算是有在努力。",
+  "不想被看见，又有点想被看见。",
+  "等一下，我先紧张完这一轮。",
+  "只会弹吉他的人，能不能也算厉害？",
+  "要是能自然地和别人说话就好了。",
+  "没关系，至少音乐不会嫌弃我。",
+  "虽然很废，但还没有彻底放弃。",
+  "存在感低一点，也是一种生存方式。",
+  "又开始胡思乱想了，停不下来。",
+  "只要还有一首歌的时间，就还能撑住。",
+  "今天也是努力不变成背景板的一天。",
+  "想逃，但是又想再试一次。",
+  "被夸一下的话，我会记很久。",
+  "就算很不起眼，也想发出一点声音。",
+  "虽然害怕，但还是有想做到的事。",
+  "安静待着的时候，其实也在拼命。",
+  "我可能不擅长说话，但我想认真弹下去。",
+  "再给我一点时间，我应该可以的。",
 ];
 
 const LINK_ICONS = {
@@ -397,6 +432,24 @@ async function loadQuotes() {
   renderQuote();
 }
 
+async function loadMascotQuotes() {
+  try {
+    const response = await fetch("./data/mascot_quotes.json", { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error("Failed to load mascot quotes");
+    }
+    const data = await response.json();
+    if (Array.isArray(data) && data.length > 0) {
+      mascotLines = data.filter((item) => typeof item === "string" && item.trim().length > 0);
+      return;
+    }
+  } catch (error) {
+    // Fall through to the local fallback pool.
+  }
+
+  mascotLines = FALLBACK_MASCOT_LINES;
+}
+
 function renderGalleryImage() {
   if (galleryImages.length === 0) {
     return;
@@ -459,7 +512,7 @@ function reactMascot() {
     return;
   }
 
-  mascotBubble.textContent = randomFrom(MASCOT_LINES);
+  mascotBubble.textContent = randomFrom(mascotLines.length > 0 ? mascotLines : FALLBACK_MASCOT_LINES);
   mascotWidget.classList.remove("is-reacting");
   void mascotWidget.offsetWidth;
   mascotWidget.classList.add("is-talking", "is-reacting");
@@ -943,6 +996,7 @@ initializeTheme();
 renderQuickLinks();
 updateClock();
 loadQuotes();
+loadMascotQuotes();
 loadGalleryManifest();
 initializeRipples();
 
