@@ -51,13 +51,13 @@
           </div>
 
           <aside class="hero-side">
-            <article class="time-card">
+            <article class="time-card interactive-panel" id="timeCard" role="button" tabindex="0" aria-label="点击切换详细时间显示">
               <span class="mini-label">当前时间</span>
               <strong id="clockText" class="clock-text">00:00</strong>
               <span id="dateText" class="quote-meta">加载中</span>
             </article>
 
-            <article class="focus-card">
+            <article class="focus-card interactive-panel" id="focusCard" role="button" tabindex="0" aria-label="点击切换今日聚焦文案">
               <span class="mini-label">今日聚焦</span>
               <strong id="focusTitle" class="focus-main">保持一个清晰的主任务。</strong>
               <span id="focusMeta" class="quote-meta">减少上下文切换，给重要事情留完整时间块。</span>
@@ -110,6 +110,9 @@
             </div>
 
             <div class="gallery-frame interactive-panel" id="galleryFrame" role="button" tabindex="0" aria-label="点击切换图片">
+              <button id="galleryZoomButton" class="gallery-zoom-button" type="button" aria-label="放大查看当前图片">
+                放大
+              </button>
               <img id="galleryImage" src="./assets/gallery/hero-reference.jpg" alt="Gallery preview" />
             </div>
             <p id="galleryCaption" class="section-copy gallery-caption">完整显示原图，观察比例与气质。</p>
@@ -146,6 +149,12 @@
           </article>
         </section>
       </main>
+    </div>
+
+    <div id="galleryLightbox" class="gallery-lightbox" aria-hidden="true">
+      <button id="galleryLightboxClose" class="gallery-lightbox-close" type="button" aria-label="关闭放大预览">关闭</button>
+      <img id="galleryLightboxImage" class="gallery-lightbox-image" src="" alt="" />
+      <p id="galleryLightboxCaption" class="gallery-lightbox-caption"></p>
     </div>
 
     <script src="./script.js"></script>

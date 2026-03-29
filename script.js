@@ -29,25 +29,46 @@ const QUICK_LINKS = [
     icon: "gemini",
   },
   {
-    title: "Gmail",
-    description: "集中处理待回复邮件。",
-    href: "https://mail.google.com/",
-    domain: "Inbox",
-    icon: "mail",
+    title: "Claude",
+    description: "补充长文本整理与代码讨论。",
+    href: "https://claude.ai/",
+    domain: "Assist",
+    icon: "spark",
   },
   {
-    title: "Calendar",
-    description: "查看今天的时间块。",
-    href: "https://calendar.google.com/",
-    domain: "Plan",
-    icon: "calendar",
+    title: "Google Drive",
+    description: "快速查看与整理常用文件。",
+    href: "https://drive.google.com/",
+    domain: "Files",
+    icon: "drive",
   },
   {
-    title: "YouTube",
-    description: "教程、收藏与轻量放松。",
-    href: "https://www.youtube.com/",
+    title: "Notion",
+    description: "记录项目笔记和零散资料。",
+    href: "https://www.notion.so/",
+    domain: "Notes",
+    icon: "note",
+  },
+  {
+    title: "X",
+    description: "快速看动态和技术消息流。",
+    href: "https://x.com/",
+    domain: "Feed",
+    icon: "x",
+  },
+  {
+    title: "Bilibili",
+    description: "教程、收藏夹和轻量放松。",
+    href: "https://www.bilibili.com/",
     domain: "Media",
     icon: "play",
+  },
+  {
+    title: "DeepSeek",
+    description: "补充问答和轻量检索入口。",
+    href: "https://chat.deepseek.com/",
+    domain: "AI",
+    icon: "spark",
   },
 ];
 
@@ -57,7 +78,52 @@ const FALLBACK_QUOTES = [
   { text: "把复杂问题拆成今天能动的一步。", source: "默认提醒" },
 ];
 
-const GALLERY_IMAGES = [
+const FOCUS_POOLS = {
+  morning: [
+    {
+      title: "上午适合先处理最需要清醒度的任务。",
+      meta: "把最难的一项放在前面，其他事情往后退。",
+    },
+    {
+      title: "先把真正需要深度思考的部分推进一段。",
+      meta: "不要一醒来就被消息和碎任务拉走。",
+    },
+    {
+      title: "给主线工作一整段连续时间。",
+      meta: "清醒时段优先留给最关键的判断和输出。",
+    },
+  ],
+  afternoon: [
+    {
+      title: "把注意力留给真正需要收口的事情。",
+      meta: "减少切换，把执行阶段留得更完整。",
+    },
+    {
+      title: "下午更适合推进、整理和完成。",
+      meta: "别把节奏切太碎，先收掉已开的任务。",
+    },
+    {
+      title: "优先做能让今天明显前进的一步。",
+      meta: "不是开新坑，而是把已有事情推到更靠前的位置。",
+    },
+  ],
+  evening: [
+    {
+      title: "给总结和回收留一点空间。",
+      meta: "把今天沉淀下来，明天会更顺。",
+    },
+    {
+      title: "晚上更适合整理，而不是继续铺开。",
+      meta: "收束任务、补记录、留出明天的起点。",
+    },
+    {
+      title: "把今天的结论写下来，比继续发散更值。",
+      meta: "留一个清楚的尾声，明天会更容易接上。",
+    },
+  ],
+};
+
+const FALLBACK_GALLERY_IMAGES = [
   {
     src: "./assets/gallery/hero-reference.jpg",
     alt: "Gallery preview one",
@@ -77,8 +143,10 @@ const themeDarkButton = document.getElementById("themeDarkButton");
 const themeLightButton = document.getElementById("themeLightButton");
 const railDots = document.querySelectorAll(".rail-dot");
 const greetingTitle = document.getElementById("greetingTitle");
+const timeCard = document.getElementById("timeCard");
 const focusTitle = document.getElementById("focusTitle");
 const focusMeta = document.getElementById("focusMeta");
+const focusCard = document.getElementById("focusCard");
 const clockText = document.getElementById("clockText");
 const dateText = document.getElementById("dateText");
 const quoteCard = document.getElementById("quoteCard");
@@ -91,15 +159,23 @@ const engineSwitch = document.querySelector(".engine-switch");
 const engineHighlight = engineSwitch.querySelector(".segment-highlight");
 const enginePills = document.querySelectorAll(".engine-pill");
 const galleryFrame = document.getElementById("galleryFrame");
+const galleryZoomButton = document.getElementById("galleryZoomButton");
 const galleryImage = document.getElementById("galleryImage");
 const galleryCaption = document.getElementById("galleryCaption");
+const galleryLightbox = document.getElementById("galleryLightbox");
+const galleryLightboxImage = document.getElementById("galleryLightboxImage");
+const galleryLightboxCaption = document.getElementById("galleryLightboxCaption");
+const galleryLightboxClose = document.getElementById("galleryLightboxClose");
 const sectionTargets = Array.from(railDots)
   .map((button) => document.getElementById(button.dataset.target))
   .filter(Boolean);
 
 let activeEngine = "google";
 let quotePool = FALLBACK_QUOTES;
+let galleryImages = FALLBACK_GALLERY_IMAGES;
 let currentImageIndex = 0;
+let detailedClockEnabled = false;
+let currentFocusPeriod = "";
 let themeSegmentControl;
 let engineSegmentControl;
 
@@ -139,6 +215,23 @@ const LINK_ICONS = {
       <path d="M11 10l4 2-4 2v-4z" />
     </svg>
   `,
+  drive: `
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M9 4h6l6 10-3 6H6l-3-6L9 4z" />
+      <path d="M9 4l6 10M6 20l6-10M3 14h18" />
+    </svg>
+  `,
+  note: `
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M7 3h8l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+      <path d="M15 3v5h5M9 13h6M9 17h4" />
+    </svg>
+  `,
+  x: `
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M5 4l14 16M19 4L5 20" />
+    </svg>
+  `,
 };
 
 function setTheme(theme) {
@@ -162,6 +255,24 @@ function setTheme(theme) {
   }
 }
 
+function getTimePeriod(hour) {
+  if (hour < 11) {
+    return "morning";
+  }
+  if (hour < 18) {
+    return "afternoon";
+  }
+  return "evening";
+}
+
+function refreshFocus(forcePeriod) {
+  const period = forcePeriod || currentFocusPeriod || "morning";
+  const pool = FOCUS_POOLS[period] || FOCUS_POOLS.morning;
+  const item = pool[Math.floor(Math.random() * pool.length)];
+  focusTitle.textContent = item.title;
+  focusMeta.textContent = item.meta;
+}
+
 function initializeTheme() {
   try {
     const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
@@ -180,8 +291,15 @@ function updateClock() {
   const now = new Date();
   const hour = now.getHours();
   const minute = now.getMinutes();
+  const second = now.getSeconds();
+  const timePeriod = getTimePeriod(hour);
 
-  clockText.textContent = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  if (detailedClockEnabled) {
+    clockText.textContent = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:${String(second).padStart(2, "0")}`;
+  } else {
+    clockText.textContent = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  }
+
   dateText.textContent = now.toLocaleDateString("zh-CN", {
     year: "numeric",
     month: "long",
@@ -190,18 +308,17 @@ function updateClock() {
   });
 
   // Time-sensitive copy keeps the page feeling like a living system widget.
-  if (hour < 11) {
+  if (timePeriod === "morning") {
     greetingTitle.textContent = "早上好，准备进入今天的重点。";
-    focusTitle.textContent = "上午适合先处理最需要清醒度的任务。";
-    focusMeta.textContent = "把最难的一项放在前面，其他事情往后退。";
-  } else if (hour < 18) {
+  } else if (timePeriod === "afternoon") {
     greetingTitle.textContent = "下午好，保持节奏，不要切得太碎。";
-    focusTitle.textContent = "把注意力留给真正需要收口的事情。";
-    focusMeta.textContent = "减少切换，把执行阶段留得更完整。";
   } else {
     greetingTitle.textContent = "晚上好，适合整理、复盘和温和收束。";
-    focusTitle.textContent = "给总结和回收留一点空间。";
-    focusMeta.textContent = "把今天沉淀下来，明天会更顺。";
+  }
+
+  if (currentFocusPeriod !== timePeriod) {
+    currentFocusPeriod = timePeriod;
+    refreshFocus(timePeriod);
   }
 }
 
@@ -211,10 +328,12 @@ function renderQuickLinks() {
       <a class="link-card glass-card" href="${item.href}" target="_blank" rel="noreferrer">
         <div class="link-top">
           <span class="link-icon">${LINK_ICONS[item.icon] ?? ""}</span>
-          <span class="link-domain">${item.domain}</span>
         </div>
-        <h3 class="link-title">${item.title}</h3>
-        <p class="link-description">${item.description}</p>
+        <div class="link-copy">
+          <h3 class="link-title">${item.title}</h3>
+          <p class="link-description">${item.description}</p>
+        </div>
+        <span class="link-domain">${new URL(item.href).hostname.replace(/^www\./, "")}</span>
       </a>
     `
   ).join("");
@@ -250,14 +369,75 @@ async function loadQuotes() {
 }
 
 function renderGalleryImage() {
-  const item = GALLERY_IMAGES[currentImageIndex];
+  if (galleryImages.length === 0) {
+    return;
+  }
+
+  const item = galleryImages[currentImageIndex % galleryImages.length];
   galleryImage.src = item.src;
   galleryImage.alt = item.alt;
   galleryCaption.textContent = item.caption;
 }
 
 function showNextImage() {
-  currentImageIndex = (currentImageIndex + 1) % GALLERY_IMAGES.length;
+  if (galleryImages.length === 0) {
+    return;
+  }
+
+  currentImageIndex = (currentImageIndex + 1) % galleryImages.length;
+  renderGalleryImage();
+}
+
+function openGalleryLightbox() {
+  if (galleryImages.length === 0) {
+    return;
+  }
+
+  const item = galleryImages[currentImageIndex % galleryImages.length];
+  galleryLightboxImage.src = item.src;
+  galleryLightboxImage.alt = item.alt;
+  galleryLightboxCaption.textContent = item.caption;
+  galleryLightbox.classList.add("is-open");
+  galleryLightbox.setAttribute("aria-hidden", "false");
+}
+
+function closeGalleryLightbox() {
+  galleryLightbox.classList.remove("is-open");
+  galleryLightbox.setAttribute("aria-hidden", "true");
+}
+
+async function loadGalleryManifest() {
+  try {
+    const response = await fetch("./assets/gallery/gallery.json", { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error("Failed to load gallery manifest");
+    }
+
+    const data = await response.json();
+    if (Array.isArray(data) && data.length > 0) {
+      galleryImages = data.map((item, index) => {
+        if (typeof item === "string") {
+          const filename = item.split("/").pop() || `image-${index + 1}`;
+          return {
+            src: `./assets/gallery/${item}`,
+            alt: filename,
+            caption: filename,
+          };
+        }
+
+        const src = item.src.startsWith("./") ? item.src : `./assets/gallery/${item.src}`;
+        return {
+          src,
+          alt: item.alt || `gallery-image-${index + 1}`,
+          caption: item.caption || item.alt || "图库图片",
+        };
+      });
+    }
+  } catch (error) {
+    galleryImages = FALLBACK_GALLERY_IMAGES;
+  }
+
+  currentImageIndex = currentImageIndex % galleryImages.length;
   renderGalleryImage();
 }
 
@@ -315,7 +495,7 @@ function createRipple(event) {
 
 function initializeRipples() {
   const rippleTargets = document.querySelectorAll(
-    ".glass-card, .theme-button, .engine-pill, .primary-button, .subtle-button, .game-entry, .interactive-panel, .rail-dot"
+    ".glass-card, .theme-button, .engine-pill, .primary-button, .subtle-button, .game-entry, .interactive-panel, .rail-dot, .gallery-zoom-button"
   );
 
   rippleTargets.forEach((element) => {
@@ -457,6 +637,7 @@ function createSegmentControl(container, highlight, buttons, onSelect) {
       return;
     }
 
+    event.preventDefault();
     isDragging = true;
     activePointerId = event.pointerId;
     currentTarget = targetButton;
@@ -471,6 +652,7 @@ function createSegmentControl(container, highlight, buttons, onSelect) {
       return;
     }
 
+    event.preventDefault();
     const containerRect = container.getBoundingClientRect();
     const firstBounds = getButtonBounds(buttons[0]);
     const lastBounds = getButtonBounds(buttons[buttons.length - 1]);
@@ -494,6 +676,7 @@ function createSegmentControl(container, highlight, buttons, onSelect) {
       return;
     }
 
+    event.preventDefault();
     isDragging = false;
     activePointerId = null;
     if (container.hasPointerCapture(event.pointerId)) {
@@ -520,9 +703,9 @@ function createSegmentControl(container, highlight, buttons, onSelect) {
 
 initializeTheme();
 renderQuickLinks();
-renderGalleryImage();
 updateClock();
 loadQuotes();
+loadGalleryManifest();
 initializeRipples();
 
 themeSegmentControl = createSegmentControl(
@@ -541,15 +724,37 @@ engineSegmentControl = createSegmentControl(
 
 themeSegmentControl?.refresh();
 engineSegmentControl?.refresh();
-setInterval(updateClock, 1000);
+setInterval(updateClock, 250);
 railDots.forEach((button) => {
   button.addEventListener("click", () => scrollToSection(button.dataset.target));
 });
 searchForm.addEventListener("submit", handleSearch);
 quoteCard.addEventListener("click", renderQuote);
 quoteCard.addEventListener("keydown", (event) => handleInteractiveKeydown(event, renderQuote));
+timeCard.addEventListener("click", () => {
+  detailedClockEnabled = !detailedClockEnabled;
+  updateClock();
+});
+timeCard.addEventListener("keydown", (event) =>
+  handleInteractiveKeydown(event, () => {
+    detailedClockEnabled = !detailedClockEnabled;
+    updateClock();
+  })
+);
+focusCard.addEventListener("click", () => refreshFocus());
+focusCard.addEventListener("keydown", (event) => handleInteractiveKeydown(event, () => refreshFocus()));
 galleryFrame.addEventListener("click", showNextImage);
 galleryFrame.addEventListener("keydown", (event) => handleInteractiveKeydown(event, showNextImage));
+galleryZoomButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+  openGalleryLightbox();
+});
+galleryLightboxClose.addEventListener("click", closeGalleryLightbox);
+galleryLightbox.addEventListener("click", (event) => {
+  if (event.target === galleryLightbox) {
+    closeGalleryLightbox();
+  }
+});
 
 window.addEventListener("load", () => {
   body.classList.add("is-ready");
@@ -560,6 +765,11 @@ window.addEventListener("scroll", updateActiveRailOnScroll, { passive: true });
 window.addEventListener("resize", () => {
   themeSegmentControl?.refresh();
   engineSegmentControl?.refresh();
+});
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && galleryLightbox.classList.contains("is-open")) {
+    closeGalleryLightbox();
+  }
 });
 document.addEventListener("selectstart", preventPageTextSelection);
 document.addEventListener("dblclick", preventPageTextSelection);
