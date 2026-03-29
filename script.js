@@ -760,13 +760,14 @@ function positionSegmentHighlight(container, highlight, target, animate = true) 
 
   const containerRect = container.getBoundingClientRect();
   const targetRect = target.getBoundingClientRect();
-  const insetLeft = parseFloat(window.getComputedStyle(highlight).left) || 0;
-  const offset = targetRect.left - containerRect.left - insetLeft;
+  const styles = window.getComputedStyle(container);
+  const insetLeft = parseFloat(styles.paddingLeft) || 0;
+  const offset = targetRect.left - containerRect.left;
 
   highlight.style.transition = animate ? "" : "none";
   highlight.style.width = `${targetRect.width}px`;
   highlight.style.transformOrigin = "center center";
-  highlight.style.left = `${insetLeft + offset}px`;
+  highlight.style.left = `${offset}px`;
   highlight.style.transform = "scaleX(1) scaleY(1)";
 
   if (!animate) {
@@ -785,6 +786,9 @@ function createSegmentControl(container, highlight, buttons, onSelect) {
   let activePointerId = null;
   let currentTarget = buttons.find((button) => button.classList.contains("is-active")) ?? buttons[0];
   let dragOffsetX = 0;
+  let pressStartedOn = null;
+  let pointerDownX = 0;
+  let hasMovedDuringPress = false;
 
   function getNearestButton(clientX) {
     let nearest = buttons[0];
@@ -806,12 +810,9 @@ function createSegmentControl(container, highlight, buttons, onSelect) {
   function getButtonBounds(button) {
     const containerRect = container.getBoundingClientRect();
     const buttonRect = button.getBoundingClientRect();
-    const insetLeft = parseFloat(window.getComputedStyle(highlight).left) || 0;
     return {
       left: buttonRect.left - containerRect.left,
-      minLeft: buttonRect.left - containerRect.left - insetLeft,
       width: buttonRect.width,
-      insetLeft,
     };
   }
 
@@ -824,8 +825,26 @@ function createSegmentControl(container, highlight, buttons, onSelect) {
     onSelect(button);
   }
 
+  function setPressedState(pressed) {
+    container.classList.toggle("is-pressing", pressed);
+    highlight.classList.toggle("is-pressed", pressed);
+  }
+
+  function triggerTravelState() {
+    highlight.classList.remove("is-traveling");
+    void highlight.offsetWidth;
+    highlight.classList.add("is-traveling");
+    window.clearTimeout(triggerTravelState.resetTimer);
+    triggerTravelState.resetTimer = window.setTimeout(() => {
+      highlight.classList.remove("is-traveling");
+    }, 320);
+  }
+
   buttons.forEach((button) => {
     button.addEventListener("click", () => {
+      if (!isDragging && button !== currentTarget) {
+        triggerTravelState();
+      }
       selectButton(button);
     });
   });
@@ -843,11 +862,13 @@ function createSegmentControl(container, highlight, buttons, onSelect) {
     event.preventDefault();
     isDragging = true;
     activePointerId = event.pointerId;
-    currentTarget = targetButton;
-    const bounds = getButtonBounds(targetButton);
+    pressStartedOn = targetButton;
+    pointerDownX = event.clientX;
+    hasMovedDuringPress = false;
+    setPressedState(true);
+    const bounds = getButtonBounds(currentTarget);
     dragOffsetX = event.clientX - (container.getBoundingClientRect().left + bounds.left + bounds.width / 2);
     container.setPointerCapture(event.pointerId);
-    positionSegmentHighlight(container, highlight, targetButton, false);
   });
 
   container.addEventListener("pointermove", (event) => {
@@ -856,6 +877,9 @@ function createSegmentControl(container, highlight, buttons, onSelect) {
     }
 
     event.preventDefault();
+    if (Math.abs(event.clientX - pointerDownX) > 4) {
+      hasMovedDuringPress = true;
+    }
     const containerRect = container.getBoundingClientRect();
     const firstBounds = getButtonBounds(buttons[0]);
     const lastBounds = getButtonBounds(buttons[buttons.length - 1]);
@@ -864,14 +888,13 @@ function createSegmentControl(container, highlight, buttons, onSelect) {
     const maxLeft = lastBounds.left;
     const rawLeft = event.clientX - containerRect.left - dragOffsetX - width / 2;
     const clampedLeft = Math.max(minLeft, Math.min(maxLeft, rawLeft));
-    const overshoot = rawLeft < minLeft ? minLeft - rawLeft : rawLeft > maxLeft ? rawLeft - maxLeft : 0;
-    const stretch = overshoot > 0 ? Math.max(0.78, 1 - overshoot / 95) : 1;
-    const squash = overshoot > 0 ? Math.min(1.25, 1 + overshoot / 80) : 1;
+    const pressScaleX = 1.08;
+    const pressScaleY = 1.08;
 
     highlight.style.transition = "none";
     highlight.style.left = `${clampedLeft}px`;
     highlight.style.transformOrigin = rawLeft < minLeft ? "left center" : rawLeft > maxLeft ? "right center" : "center center";
-    highlight.style.transform = `scaleX(${stretch}) scaleY(${squash})`;
+    highlight.style.transform = `scaleX(${pressScaleX}) scaleY(${pressScaleY})`;
   });
 
   function finishDrag(event) {
@@ -882,16 +905,28 @@ function createSegmentControl(container, highlight, buttons, onSelect) {
     event.preventDefault();
     isDragging = false;
     activePointerId = null;
+    setPressedState(false);
     if (container.hasPointerCapture(event.pointerId)) {
       container.releasePointerCapture(event.pointerId);
     }
-    const nearest = getNearestButton(event.clientX);
-    currentTarget = nearest;
+    const nearest = hasMovedDuringPress ? getNearestButton(event.clientX) : pressStartedOn;
+    const shouldTravel = nearest && nearest !== currentTarget;
+    if (shouldTravel && !hasMovedDuringPress) {
+      triggerTravelState();
+    }
+    currentTarget = nearest ?? currentTarget;
     selectButton(currentTarget);
+    pressStartedOn = null;
+    hasMovedDuringPress = false;
   }
 
   container.addEventListener("pointerup", finishDrag);
-  container.addEventListener("pointercancel", finishDrag);
+  container.addEventListener("pointercancel", (event) => {
+    setPressedState(false);
+    pressStartedOn = null;
+    hasMovedDuringPress = false;
+    finishDrag(event);
+  });
 
   return {
     snapTo(button, animate = true) {
