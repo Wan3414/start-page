@@ -76,6 +76,28 @@ textarea,
   user-select: text;
 }
 
+button,
+a,
+[role="button"],
+.interactive-panel,
+.link-card,
+.game-entry,
+.theme-switch,
+.theme-button,
+.engine-switch,
+.engine-pill,
+.section-rail,
+.rail-dot,
+.gallery-frame,
+.gallery-frame img,
+.gallery-zoom-button,
+.gallery-lightbox,
+.gallery-lightbox-image,
+.gallery-lightbox-close {
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body *::selection {
   background: transparent;
 }
@@ -120,6 +142,8 @@ body::before {
   -webkit-backdrop-filter: blur(18px);
   isolation: isolate;
   touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .section-rail {
@@ -131,6 +155,8 @@ body::before {
   flex-direction: column;
   gap: 10px;
   transform: translateY(-50%);
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .rail-dot {
@@ -144,6 +170,8 @@ body::before {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   cursor: pointer;
   transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .rail-dot:hover,
@@ -222,6 +250,8 @@ body[data-theme="light"] .rail-dot::after {
   font-weight: 700;
   cursor: pointer;
   transition: background 200ms ease, color 200ms ease, transform 200ms ease;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .theme-button:hover,
@@ -558,6 +588,8 @@ body[data-theme="light"] .segment-highlight {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
   isolation: isolate;
   touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .engine-pill {
@@ -573,6 +605,8 @@ body[data-theme="light"] .segment-highlight {
   font-weight: 700;
   cursor: pointer;
   transition: background 200ms ease, color 200ms ease, transform 200ms ease;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .engine-pill.is-active {

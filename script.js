@@ -273,6 +273,10 @@ function refreshFocus(forcePeriod) {
   focusMeta.textContent = item.meta;
 }
 
+function toDisplayImageSrc(src) {
+  return encodeURI(src);
+}
+
 function initializeTheme() {
   try {
     const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
@@ -374,7 +378,7 @@ function renderGalleryImage() {
   }
 
   const item = galleryImages[currentImageIndex % galleryImages.length];
-  galleryImage.src = item.src;
+  galleryImage.src = toDisplayImageSrc(item.src);
   galleryImage.alt = item.alt;
   galleryCaption.textContent = item.caption;
 }
@@ -394,7 +398,7 @@ function openGalleryLightbox() {
   }
 
   const item = galleryImages[currentImageIndex % galleryImages.length];
-  galleryLightboxImage.src = item.src;
+  galleryLightboxImage.src = toDisplayImageSrc(item.src);
   galleryLightboxImage.alt = item.alt;
   galleryLightboxCaption.textContent = item.caption;
   galleryLightbox.classList.add("is-open");
@@ -404,6 +408,16 @@ function openGalleryLightbox() {
 function closeGalleryLightbox() {
   galleryLightbox.classList.remove("is-open");
   galleryLightbox.setAttribute("aria-hidden", "true");
+}
+
+function handleGalleryImageError() {
+  if (galleryImages.length <= 1) {
+    galleryCaption.textContent = "图片加载失败，请检查 gallery.json 和图片文件名。";
+    return;
+  }
+
+  currentImageIndex = (currentImageIndex + 1) % galleryImages.length;
+  renderGalleryImage();
 }
 
 async function loadGalleryManifest() {
@@ -745,6 +759,8 @@ focusCard.addEventListener("click", () => refreshFocus());
 focusCard.addEventListener("keydown", (event) => handleInteractiveKeydown(event, () => refreshFocus()));
 galleryFrame.addEventListener("click", showNextImage);
 galleryFrame.addEventListener("keydown", (event) => handleInteractiveKeydown(event, showNextImage));
+galleryImage.addEventListener("error", handleGalleryImageError);
+galleryLightboxImage.addEventListener("error", closeGalleryLightbox);
 galleryZoomButton.addEventListener("click", (event) => {
   event.stopPropagation();
   openGalleryLightbox();
