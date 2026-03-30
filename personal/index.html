@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Personal settings for Wan Start Page." />
+    <title>个人设置 | Wan Start Page</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/icons/favicon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="personal-page">
+      <header class="personal-header glass-card">
+        <div class="personal-header-copy">
+          <p class="eyebrow">PROFILE / SETTINGS</p>
+          <h1>个人设置</h1>
+          <p class="personal-copy">这里集中放账户状态、主题、开发者模式和你的本地个人资料设置。</p>
+        </div>
+        <div class="personal-header-actions">
+          <a class="subtle-link" href="../index.html">返回主页</a>
+        </div>
+      </header>
+
+      <section class="personal-grid">
+        <article class="glass-card settings-card">
+          <div class="settings-account">
+            <span id="settingsAvatarInitials" class="settings-avatar-initials">WA</span>
+            <div>
+              <span class="mini-label">SESSION</span>
+              <strong id="settingsAccountName" class="settings-account-name">未登录</strong>
+              <p id="settingsAccountMeta" class="settings-account-meta">完成认证后，这里会显示当前用户状态。</p>
+            </div>
+          </div>
+
+          <div class="settings-actions">
+            <button id="personalLogoutButton" class="subtle-button" type="button">退出当前身份</button>
+          </div>
+          <p id="personalResultText" class="settings-result">设置会保存在当前浏览器中。</p>
+        </article>
+
+        <article class="glass-card settings-card">
+          <div class="settings-block-head">
+            <div>
+              <span class="mini-label">MODE</span>
+              <h2>页面模式</h2>
+            </div>
+            <p class="settings-tip">切换使用者或开发者视图</p>
+          </div>
+          <div class="mode-switch" role="group" aria-label="页面模式切换">
+            <span class="segment-highlight" aria-hidden="true"></span>
+            <button id="userModeButton" class="mode-button is-active" type="button" aria-pressed="true">使用者</button>
+            <button id="developerModeButton" class="mode-button" type="button" aria-pressed="false">开发者</button>
+          </div>
+        </article>
+
+        <article class="glass-card settings-card">
+          <div class="settings-block-head">
+            <div>
+              <span class="mini-label">THEME</span>
+              <h2>页面主题</h2>
+            </div>
+            <p class="settings-tip">切换明暗主题</p>
+          </div>
+          <div class="theme-switch" role="group" aria-label="主题切换">
+            <span class="segment-highlight" aria-hidden="true"></span>
+            <button id="themeDarkButton" class="theme-button is-active" type="button" aria-pressed="true">Dark</button>
+            <button id="themeLightButton" class="theme-button" type="button" aria-pressed="false">Light</button>
+          </div>
+        </article>
+
+        <article class="glass-card settings-card settings-form-card">
+          <div class="settings-block-head">
+            <div>
+              <span class="mini-label">PERSONAL</span>
+              <h2>常用资料</h2>
+            </div>
+            <p class="settings-tip">这些内容只保存在当前浏览器。</p>
+          </div>
+
+          <div class="settings-form-grid">
+            <label class="sr-only" for="settingsPreferredNameInput">常用称呼</label>
+            <input id="settingsPreferredNameInput" class="settings-input" type="text" placeholder="常用称呼" autocomplete="nickname" />
+
+            <label class="sr-only" for="settingsEmailInput">联系邮箱</label>
+            <input id="settingsEmailInput" class="settings-input" type="email" placeholder="联系邮箱" autocomplete="email" />
+
+            <label class="sr-only" for="settingsSignatureInput">签名备注</label>
+            <textarea id="settingsSignatureInput" class="settings-textarea" rows="4" placeholder="签名、备注、当前身份标签"></textarea>
+          </div>
+
+          <div class="settings-actions">
+            <button id="settingsSaveButton" class="primary-button" type="button">保存设置</button>
+            <button id="settingsResetButton" class="subtle-button" type="button">重置本地设置</button>
+          </div>
+          <p id="settingsResultText" class="settings-result">等待操作。</p>
+        </article>
+      </section>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>

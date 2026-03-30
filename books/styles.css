@@ -64,6 +64,7 @@ body {
 }
 
 .books-header,
+.books-upload-stage,
 .books-library-stage,
 .books-reader {
   padding: 24px;
@@ -77,6 +78,10 @@ body {
 }
 
 .books-library-stage {
+  margin-top: 18px;
+}
+
+.books-upload-stage {
   margin-top: 18px;
 }
 
@@ -131,6 +136,13 @@ body {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.books-upload-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 6px;
 }
 
 .reader-info-heading {

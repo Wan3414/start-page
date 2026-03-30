@@ -22,19 +22,9 @@
       <div class="ambient ambient-top"></div>
       <div class="ambient ambient-bottom"></div>
 
-      <div class="top-switches">
-        <div class="mode-switch" role="group" aria-label="页面模式切换">
-          <span class="segment-highlight" aria-hidden="true"></span>
-          <button id="userModeButton" class="mode-button is-active" type="button" aria-pressed="true">使用者</button>
-          <button id="developerModeButton" class="mode-button" type="button" aria-pressed="false">开发者</button>
-        </div>
-
-        <div class="theme-switch" role="group" aria-label="主题切换">
-          <span class="segment-highlight" aria-hidden="true"></span>
-          <button id="themeDarkButton" class="theme-button is-active" type="button" aria-pressed="true">Dark</button>
-          <button id="themeLightButton" class="theme-button" type="button" aria-pressed="false">Light</button>
-        </div>
-      </div>
+      <a id="settingsAvatarButton" class="settings-avatar-button" href="./personal/index.html" aria-label="进入用户设置页面">
+        <span id="settingsAvatarInitials" class="settings-avatar-initials">WA</span>
+      </a>
 
       <nav class="section-rail" aria-label="页面导航">
         <span class="rail-indicator" id="railIndicator" aria-hidden="true"></span>
@@ -141,59 +131,30 @@
         </section>
 
         <section class="dashboard-grid">
-          <article class="glass-card gallery-card" id="gallerySection">
-            <div class="section-heading compact">
-              <div>
-                <p class="eyebrow">GALLERY</p>
-                <h2>图像</h2>
-              </div>
-            </div>
-
-            <div class="gallery-frame interactive-panel" id="galleryFrame" role="button" tabindex="0" aria-label="点击切换图片">
-              <button id="galleryPrevButton" class="gallery-nav-button gallery-prev-button" type="button" aria-label="查看上一张图片">
-                上一张
-              </button>
-              <button id="galleryZoomButton" class="gallery-zoom-button" type="button" aria-label="放大查看当前图片">
-                放大
-              </button>
-              <img id="galleryImage" src="./assets/gallery/hero-reference.jpg" alt="Gallery preview" />
-            </div>
-            <p id="galleryCaption" class="section-copy gallery-caption">完整显示原图，观察比例与气质。</p>
-          </article>
-
           <div class="widgets-stack" id="widgetsSection">
-            <article class="glass-card widget-card auth-card">
+            <article class="glass-card widget-card gallery-card" id="gallerySection">
               <div class="section-heading compact">
                 <div>
-                  <p class="eyebrow">ACCOUNT</p>
-                  <h2>账户</h2>
+                  <p class="eyebrow">GALLERY</p>
+                  <h2>图库</h2>
                 </div>
               </div>
 
-              <div class="auth-status-block">
-                <span class="mini-label">SESSION</span>
-                <strong id="authStatusTitle" class="auth-status-title">未登录</strong>
-                <span id="authStatusMeta" class="quote-meta">可以本地注册和登录，服务器也能直接测试。</span>
+              <div class="gallery-upload-actions">
+                <input id="galleryUploadInput" type="file" accept="image/*" hidden />
+                <button id="galleryUploadButton" class="subtle-button" type="button">上传图片</button>
               </div>
 
-              <div class="auth-form-grid">
-                <label class="sr-only" for="authUsernameInput">用户名</label>
-                <input id="authUsernameInput" class="auth-input" type="text" placeholder="用户名（3-32位字母数字下划线）" autocomplete="username" />
-
-                <label class="sr-only" for="authDisplayNameInput">显示名</label>
-                <input id="authDisplayNameInput" class="auth-input" type="text" placeholder="显示名（可选）" autocomplete="nickname" />
-
-                <label class="sr-only" for="authPasswordInput">密码</label>
-                <input id="authPasswordInput" class="auth-input" type="password" placeholder="密码（至少 6 位）" autocomplete="current-password" />
+              <div class="gallery-frame interactive-panel" id="galleryFrame" role="button" tabindex="0" aria-label="点击切换图片">
+                <button id="galleryPrevButton" class="gallery-nav-button gallery-prev-button" type="button" aria-label="查看上一张图片">
+                  上一张
+                </button>
+                <button id="galleryZoomButton" class="gallery-zoom-button" type="button" aria-label="放大查看当前图片">
+                  放大
+                </button>
+                <img id="galleryImage" src="./assets/gallery/hero-reference.jpg" alt="Gallery preview" />
               </div>
-
-              <div class="auth-actions">
-                <button id="authRegisterButton" class="subtle-button" type="button">注册</button>
-                <button id="authLoginButton" class="primary-button" type="button">登录</button>
-                <button id="authLogoutButton" class="subtle-button" type="button">退出</button>
-              </div>
-
-              <p id="authResultText" class="api-status-text">等待操作。</p>
+              <p id="galleryCaption" class="section-copy gallery-caption">当前图库为空时，这里会提示先登录并上传图片。</p>
             </article>
 
             <article class="glass-card widget-card">
@@ -275,6 +236,31 @@
           <button id="apiResultCopy" class="subtle-button" type="button">复制调试信息</button>
           <button id="apiResultClose" class="primary-button" type="button">关闭</button>
         </div>
+      </div>
+    </div>
+
+    <div id="authGateModal" class="auth-gate-modal" aria-hidden="true">
+      <div class="auth-gate-backdrop"></div>
+      <div class="auth-gate-panel glass-card" role="dialog" aria-modal="true" aria-labelledby="authGateTitle">
+        <span class="mini-label">ACCESS</span>
+        <strong id="authGateTitle" class="auth-gate-title">先完成认证，再使用这个页面</strong>
+        <p class="auth-gate-copy">你可以直接登录、注册一个新账号，或者先以游客身份进入。未完成这一步前，页面内容不会开放交互。</p>
+
+        <div class="auth-form-grid auth-gate-form-grid">
+          <label class="sr-only" for="authUsernameInput">用户名</label>
+          <input id="authUsernameInput" class="auth-input" type="text" placeholder="用户名（3-32位字母数字下划线）" autocomplete="username" />
+
+          <label class="sr-only" for="authPasswordInput">密码</label>
+          <input id="authPasswordInput" class="auth-input" type="password" placeholder="密码（至少 6 位）" autocomplete="current-password" />
+        </div>
+
+        <div class="auth-actions auth-gate-actions">
+          <button id="authRegisterButton" class="subtle-button" type="button">注册</button>
+          <button id="authLoginButton" class="primary-button" type="button">登录</button>
+          <button id="authGuestButton" class="subtle-button" type="button">游客进入</button>
+        </div>
+
+        <p id="authGateResultText" class="api-status-text">请选择登录、注册或游客进入。</p>
       </div>
     </div>
 

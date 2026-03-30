@@ -9,7 +9,9 @@ const APP_MODE_STORAGE_KEY = "wan-start-page-mode";
 const API_BASE_STORAGE_KEY = "wan-start-page-api-base";
 const AUTH_TOKEN_STORAGE_KEY = "wan-start-page-auth-token";
 const AUTH_USER_STORAGE_KEY = "wan-start-page-auth-user";
+const AUTH_GUEST_STORAGE_KEY = "wan-start-page-auth-guest";
 const DEBUG_LOG_STORAGE_KEY = "wan-start-page-debug-log";
+const USER_SETTINGS_STORAGE_KEY = "wan-start-page-user-settings";
 const DEFAULT_API_BASE = "";
 
 const QUICK_LINKS = [
@@ -137,12 +139,14 @@ const FALLBACK_GALLERY_IMAGES = [
 ];
 
 const body = document.body;
+const settingsAvatarButton = document.getElementById("settingsAvatarButton");
+const settingsAvatarInitials = document.getElementById("settingsAvatarInitials");
 const modeSwitch = document.querySelector(".mode-switch");
 const modeHighlight = modeSwitch?.querySelector(".segment-highlight");
 const userModeButton = document.getElementById("userModeButton");
 const developerModeButton = document.getElementById("developerModeButton");
 const themeSwitch = document.querySelector(".theme-switch");
-const themeHighlight = themeSwitch.querySelector(".segment-highlight");
+const themeHighlight = themeSwitch?.querySelector(".segment-highlight");
 const themeDarkButton = document.getElementById("themeDarkButton");
 const themeLightButton = document.getElementById("themeLightButton");
 const railIndicator = document.getElementById("railIndicator");
@@ -174,15 +178,16 @@ const apiResultBody = document.getElementById("apiResultBody");
 const apiResultCopy = document.getElementById("apiResultCopy");
 const apiResultClose = document.getElementById("apiResultClose");
 const apiTestCard = document.getElementById("apiTestCard");
-const authStatusTitle = document.getElementById("authStatusTitle");
 const authStatusMeta = document.getElementById("authStatusMeta");
 const authUsernameInput = document.getElementById("authUsernameInput");
-const authDisplayNameInput = document.getElementById("authDisplayNameInput");
 const authPasswordInput = document.getElementById("authPasswordInput");
 const authRegisterButton = document.getElementById("authRegisterButton");
 const authLoginButton = document.getElementById("authLoginButton");
+const authGuestButton = document.getElementById("authGuestButton");
 const authLogoutButton = document.getElementById("authLogoutButton");
 const authResultText = document.getElementById("authResultText");
+const authGateModal = document.getElementById("authGateModal");
+const authGateResultText = document.getElementById("authGateResultText");
 const debugLogCard = document.getElementById("debugLogCard");
 const debugLogList = document.getElementById("debugLogList");
 const debugLogClearButton = document.getElementById("debugLogClearButton");
@@ -190,6 +195,8 @@ const debugLogCopyButton = document.getElementById("debugLogCopyButton");
 const galleryFrame = document.getElementById("galleryFrame");
 const galleryPrevButton = document.getElementById("galleryPrevButton");
 const galleryZoomButton = document.getElementById("galleryZoomButton");
+const galleryUploadInput = document.getElementById("galleryUploadInput");
+const galleryUploadButton = document.getElementById("galleryUploadButton");
 const galleryImage = document.getElementById("galleryImage");
 const galleryCaption = document.getElementById("galleryCaption");
 const galleryLightbox = document.getElementById("galleryLightbox");
@@ -221,6 +228,11 @@ let mascotLines = [];
 let currentAuthToken = "";
 let currentAuthUser = null;
 let debugLogEntries = [];
+let currentUserSettings = {
+  preferred_name: "",
+  email: "",
+  signature: "",
+};
 
 function normalizeApiBase(value) {
   return value.trim().replace(/\/+$/, "");
@@ -305,6 +317,52 @@ function saveAuthUser(user) {
   }
 }
 
+function getStoredGuestMode() {
+  try {
+    return window.localStorage.getItem(AUTH_GUEST_STORAGE_KEY) === "1";
+  } catch (error) {
+    return false;
+  }
+}
+
+function saveGuestMode(enabled) {
+  try {
+    if (enabled) {
+      window.localStorage.setItem(AUTH_GUEST_STORAGE_KEY, "1");
+    } else {
+      window.localStorage.removeItem(AUTH_GUEST_STORAGE_KEY);
+    }
+  } catch (error) {
+    // Ignore storage failures.
+  }
+}
+
+function getStoredUserSettings() {
+  try {
+    const rawValue = window.localStorage.getItem(USER_SETTINGS_STORAGE_KEY);
+    if (!rawValue) {
+      return {
+        preferred_name: "",
+        email: "",
+        signature: "",
+      };
+    }
+
+    const parsed = JSON.parse(rawValue);
+    return {
+      preferred_name: typeof parsed.preferred_name === "string" ? parsed.preferred_name : "",
+      email: typeof parsed.email === "string" ? parsed.email : "",
+      signature: typeof parsed.signature === "string" ? parsed.signature : "",
+    };
+  } catch (error) {
+    return {
+      preferred_name: "",
+      email: "",
+      signature: "",
+    };
+  }
+}
+
 function loadDebugLogs() {
   try {
     const rawValue = window.localStorage.getItem(DEBUG_LOG_STORAGE_KEY);
@@ -352,6 +410,70 @@ function renderDebugLogs() {
       `;
     })
     .join("");
+}
+
+function setAuthGateLocked(locked) {
+  body.dataset.authLocked = locked ? "true" : "false";
+
+  if (!authGateModal) {
+    return;
+  }
+
+  authGateModal.classList.toggle("is-open", locked);
+  authGateModal.setAttribute("aria-hidden", String(!locked));
+}
+
+function openAuthGate(message = "") {
+  setAuthGateLocked(true);
+  if (message && authGateResultText) {
+    authGateResultText.textContent = message;
+  }
+}
+
+function closeAuthGate(message = "") {
+  setAuthGateLocked(false);
+  if (message && authGateResultText) {
+    authGateResultText.textContent = message;
+  }
+}
+
+function getAvatarLabelSource() {
+  const preferredName = currentUserSettings.preferred_name.trim();
+  if (preferredName) {
+    return preferredName;
+  }
+
+  if (currentAuthUser?.is_guest) {
+    return "游客";
+  }
+
+  if (currentAuthUser?.username) {
+    return currentAuthUser.username;
+  }
+
+  return "访客";
+}
+
+function computeAvatarInitials(source) {
+  const compact = source.replace(/\s+/g, "");
+  if (!compact) {
+    return "SP";
+  }
+
+  const ascii = compact.replace(/[^A-Za-z0-9]/g, "");
+  if (ascii.length >= 2) {
+    return ascii.slice(0, 2).toUpperCase();
+  }
+
+  return compact.slice(0, 2).toUpperCase();
+}
+
+function renderSettingsSummary() {
+  const displaySource = getAvatarLabelSource();
+
+  if (settingsAvatarInitials) {
+    settingsAvatarInitials.textContent = computeAvatarInitials(displaySource);
+  }
 }
 
 function addDebugLog(title, detail) {
@@ -432,6 +554,56 @@ async function apiJsonRequest(path, options = {}) {
       ...(options.headers || {}),
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
+  });
+
+  const rawText = await response.text();
+  let data = {};
+
+  try {
+    data = rawText ? JSON.parse(rawText) : {};
+  } catch (error) {
+    data = { raw: rawText };
+  }
+
+  if (!response.ok) {
+    const errorMessage =
+      (data && (data.detail || data.message)) ||
+      `HTTP ${response.status}`;
+    const requestError = new Error(errorMessage);
+    requestError.status = response.status;
+    requestError.data = data;
+    throw requestError;
+  }
+
+  return data;
+}
+
+async function apiUploadRequest(path, fieldName, file, extraFields = {}) {
+  const apiBase = getApiBaseForRequest();
+
+  if (!apiBase) {
+    throw new Error("请先填写或确认后端地址。");
+  }
+
+  const formData = new FormData();
+  formData.append(fieldName, file);
+  Object.keys(extraFields).forEach((key) => {
+    formData.append(key, extraFields[key]);
+  });
+
+  const headers = {
+    Accept: "application/json",
+    "X-Debug-Mode": body.dataset.appMode === "developer" ? "1" : "0",
+  };
+
+  if (currentAuthToken) {
+    headers.Authorization = `Bearer ${currentAuthToken}`;
+  }
+
+  const response = await fetch(`${apiBase}${path}`, {
+    method: "POST",
+    headers,
+    body: formData,
   });
 
   const rawText = await response.text();
@@ -729,10 +901,10 @@ function setTheme(theme) {
   const nextTheme = theme === "light" ? "light" : "dark";
   body.dataset.theme = nextTheme;
 
-  themeDarkButton.classList.toggle("is-active", nextTheme === "dark");
-  themeLightButton.classList.toggle("is-active", nextTheme === "light");
-  themeDarkButton.setAttribute("aria-pressed", String(nextTheme === "dark"));
-  themeLightButton.setAttribute("aria-pressed", String(nextTheme === "light"));
+  themeDarkButton?.classList.toggle("is-active", nextTheme === "dark");
+  themeLightButton?.classList.toggle("is-active", nextTheme === "light");
+  themeDarkButton?.setAttribute("aria-pressed", String(nextTheme === "dark"));
+  themeLightButton?.setAttribute("aria-pressed", String(nextTheme === "light"));
 
   try {
     window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
@@ -854,28 +1026,28 @@ function initializeApiPanel() {
 }
 
 function renderAuthState() {
-  if (!authStatusTitle || !authStatusMeta || !authResultText) {
-    return;
+  if (currentAuthUser?.is_guest) {
+    authStatusMeta && (authStatusMeta.textContent = "当前以游客身份进入，页面已解锁。");
+    authResultText && (authResultText.textContent = "游客模式可直接浏览页面，但不会调用需要账户身份的接口。");
+  } else if (currentAuthUser) {
+    authStatusMeta && (authStatusMeta.textContent = `当前用户：${currentAuthUser.username}`);
+    authResultText && (authResultText.textContent = "已登录，可以直接使用需要身份的后端接口。");
+  } else {
+    authStatusMeta && (authStatusMeta.textContent = "必须先通过前端认证弹窗，才能使用整个页面。");
+    authResultText && (authResultText.textContent = "等待认证。");
   }
 
-  if (currentAuthUser) {
-    authStatusTitle.textContent = `${currentAuthUser.display_name || currentAuthUser.username}`;
-    authStatusMeta.textContent = `当前用户：${currentAuthUser.username}`;
-    authResultText.textContent = "已登录，可以直接调用需要身份的后端接口。";
-  } else {
-    authStatusTitle.textContent = "未登录";
-    authStatusMeta.textContent = "可以本地注册和登录，服务器也能直接测试。";
-    authResultText.textContent = "等待操作。";
-  }
+  renderSettingsSummary();
 }
 
 async function registerUser() {
   const username = authUsernameInput?.value.trim() || "";
-  const displayName = authDisplayNameInput?.value.trim() || "";
   const password = authPasswordInput?.value || "";
 
-  authResultText.textContent = "正在注册...";
-  addDebugLog("尝试注册", { username, displayName });
+  if (authGateResultText) {
+    authGateResultText.textContent = "正在注册...";
+  }
+  addDebugLog("尝试注册", { username });
 
   try {
     const data = await apiJsonRequest("/api/auth/register", {
@@ -883,17 +1055,25 @@ async function registerUser() {
       body: {
         username,
         password,
-        display_name: displayName,
       },
     });
 
     currentAuthUser = data.user || null;
     saveAuthUser(currentAuthUser);
+    saveGuestMode(false);
     renderAuthState();
-    authResultText.textContent = data.message || "注册成功。";
+    loadGalleryManifest();
+    authResultText && (authResultText.textContent = data.message || "注册成功。");
+    if (authGateResultText) {
+      authGateResultText.textContent = data.message || "注册成功。";
+    }
+    closeAuthGate(data.message || "注册成功，页面已解锁。");
     addDebugLog("注册成功", data.debug || data);
   } catch (error) {
-    authResultText.textContent = error.message || "注册失败。";
+    authResultText && (authResultText.textContent = error.message || "注册失败。");
+    if (authGateResultText) {
+      authGateResultText.textContent = error.message || "注册失败。";
+    }
     addDebugLog("注册失败", error.data || error.message || "unknown error");
   }
 }
@@ -902,7 +1082,9 @@ async function loginUser() {
   const username = authUsernameInput?.value.trim() || "";
   const password = authPasswordInput?.value || "";
 
-  authResultText.textContent = "正在登录...";
+  if (authGateResultText) {
+    authGateResultText.textContent = "正在登录...";
+  }
   addDebugLog("尝试登录", { username });
 
   try {
@@ -918,26 +1100,70 @@ async function loginUser() {
     currentAuthUser = data.user || null;
     saveAuthToken(currentAuthToken);
     saveAuthUser(currentAuthUser);
+    saveGuestMode(false);
     renderAuthState();
-    authResultText.textContent = data.message || "登录成功。";
+    loadGalleryManifest();
+    authResultText && (authResultText.textContent = data.message || "登录成功。");
+    if (authGateResultText) {
+      authGateResultText.textContent = data.message || "登录成功。";
+    }
+    closeAuthGate(data.message || "登录成功，页面已解锁。");
     addDebugLog("登录成功", data.debug || data);
   } catch (error) {
-    authResultText.textContent = error.message || "登录失败。";
+    authResultText && (authResultText.textContent = error.message || "登录失败。");
+    if (authGateResultText) {
+      authGateResultText.textContent = error.message || "登录失败。";
+    }
     addDebugLog("登录失败", error.data || error.message || "unknown error");
   }
 }
 
+function enterGuestMode() {
+  currentAuthToken = "";
+  currentAuthUser = {
+    username: "guest",
+    is_guest: true,
+  };
+  saveAuthToken("");
+  saveAuthUser(currentAuthUser);
+  saveGuestMode(true);
+  renderAuthState();
+  loadGalleryManifest();
+  authResultText && (authResultText.textContent = "已以游客身份进入。");
+  if (authGateResultText) {
+    authGateResultText.textContent = "已以游客身份进入。";
+  }
+  closeAuthGate("游客模式已启用。");
+  addDebugLog("游客进入", "用户选择游客模式解锁页面。");
+}
+
 async function logoutUser() {
-  if (!currentAuthToken) {
+  if (currentAuthUser?.is_guest) {
     currentAuthUser = null;
+    saveGuestMode(false);
+    saveAuthToken("");
     saveAuthUser(null);
     renderAuthState();
-    authResultText.textContent = "当前没有登录会话。";
+    loadGalleryManifest();
+    authResultText && (authResultText.textContent = "已退出游客模式。");
+    openAuthGate("已退出游客模式，请重新登录、注册或继续以游客身份进入。");
+    addDebugLog("退出游客模式", "已重新锁定页面。");
+    return;
+  }
+
+  if (!currentAuthToken) {
+    currentAuthUser = null;
+    saveGuestMode(false);
+    saveAuthUser(null);
+    renderAuthState();
+    loadGalleryManifest();
+    authResultText && (authResultText.textContent = "当前没有登录会话。");
+    openAuthGate("当前没有登录会话，请先完成认证。");
     addDebugLog("退出登录", "当前没有登录令牌。");
     return;
   }
 
-  authResultText.textContent = "正在退出...";
+  authResultText && (authResultText.textContent = "正在退出...");
   addDebugLog("尝试退出登录", currentAuthUser || "unknown user");
 
   try {
@@ -948,12 +1174,15 @@ async function logoutUser() {
     currentAuthToken = "";
     currentAuthUser = null;
     saveAuthToken("");
+    saveGuestMode(false);
     saveAuthUser(null);
     renderAuthState();
-    authResultText.textContent = data.message || "已退出登录。";
+    loadGalleryManifest();
+    authResultText && (authResultText.textContent = data.message || "已退出登录。");
+    openAuthGate("已退出登录，请重新认证。");
     addDebugLog("退出成功", data.debug || data);
   } catch (error) {
-    authResultText.textContent = error.message || "退出失败。";
+    authResultText && (authResultText.textContent = error.message || "退出失败。");
     addDebugLog("退出失败", error.data || error.message || "unknown error");
   }
 }
@@ -963,7 +1192,24 @@ async function restoreAuthSession() {
   currentAuthUser = getStoredAuthUser();
   renderAuthState();
 
+  if (currentAuthUser?.is_guest || getStoredGuestMode()) {
+    currentAuthToken = "";
+    currentAuthUser = {
+      username: "guest",
+      is_guest: true,
+    };
+    saveAuthToken("");
+    saveAuthUser(currentAuthUser);
+    saveGuestMode(true);
+    renderAuthState();
+    loadGalleryManifest();
+    closeAuthGate("游客模式已恢复。");
+    addDebugLog("恢复游客会话", "已从浏览器本地恢复游客模式。");
+    return;
+  }
+
   if (!currentAuthToken) {
+    openAuthGate("请选择登录、注册或游客进入。");
     return;
   }
 
@@ -972,21 +1218,41 @@ async function restoreAuthSession() {
     currentAuthUser = data.user || null;
     saveAuthUser(currentAuthUser);
     renderAuthState();
+    loadGalleryManifest();
+    closeAuthGate("已恢复登录会话。");
     addDebugLog("恢复登录会话", data.debug || data);
   } catch (error) {
     currentAuthToken = "";
     currentAuthUser = null;
     saveAuthToken("");
+    saveGuestMode(false);
     saveAuthUser(null);
     renderAuthState();
+    loadGalleryManifest();
+    openAuthGate("登录状态已失效，请重新登录、注册或游客进入。");
     addDebugLog("恢复登录失败", error.data || error.message || "unknown error");
   }
 }
 
 function initializeAuthPanel() {
+  settingsAvatarButton?.addEventListener("click", (event) => {
+    if (currentAuthUser?.username || currentAuthUser?.is_guest) {
+      return;
+    }
+
+    event.preventDefault();
+    openAuthGate("请选择登录、注册或游客进入。");
+    addDebugLog("打开认证弹窗", currentAuthUser || "anonymous");
+  });
   authRegisterButton?.addEventListener("click", registerUser);
   authLoginButton?.addEventListener("click", loginUser);
+  authGuestButton?.addEventListener("click", enterGuestMode);
   authLogoutButton?.addEventListener("click", logoutUser);
+}
+
+function initializeUserSettings() {
+  currentUserSettings = getStoredUserSettings();
+  renderSettingsSummary();
 }
 
 function updateClock() {
@@ -1067,6 +1333,11 @@ async function loadMascotQuotes() {
 
 function renderGalleryImage() {
   if (galleryImages.length === 0) {
+    galleryImage.removeAttribute("src");
+    galleryImage.alt = "当前没有图库图片";
+    galleryCaption.textContent = currentAuthUser?.username
+      ? "当前图库为空，先上传一张图片。"
+      : "请先登录正式账号，再管理自己的图库。";
     return;
   }
 
@@ -1114,7 +1385,7 @@ function closeGalleryLightbox() {
 
 function handleGalleryImageError() {
   if (galleryImages.length <= 1) {
-    galleryCaption.textContent = "图片加载失败，请检查 gallery.json 和图片文件名。";
+    galleryCaption.textContent = "图片加载失败，请检查当前用户图库文件和后端接口。";
     return;
   }
 
@@ -1159,38 +1430,54 @@ function moveMascotEyes(event) {
 }
 
 async function loadGalleryManifest() {
-  try {
-    const response = await fetch("./data/gallery.json", { cache: "no-store" });
-    if (!response.ok) {
-      throw new Error("Failed to load gallery manifest");
-    }
-
-    const data = await response.json();
-    if (Array.isArray(data) && data.length > 0) {
-      galleryImages = data.map((item, index) => {
-        if (typeof item === "string") {
-          const filename = item.split("/").pop() || `image-${index + 1}`;
-          return {
-            src: `./assets/gallery/${item}`,
-            alt: filename,
-            caption: filename,
-          };
-        }
-
-        const src = item.src.startsWith("./") ? item.src : `./assets/gallery/${item.src}`;
-        return {
-          src,
-          alt: item.alt || `gallery-image-${index + 1}`,
-          caption: item.caption || item.alt || "图库图片",
-        };
-      });
-    }
-  } catch (error) {
-    galleryImages = FALLBACK_GALLERY_IMAGES;
+  if (!currentAuthToken || !currentAuthUser || currentAuthUser.is_guest) {
+    galleryImages = [];
+    currentImageIndex = 0;
+    renderGalleryImage();
+    return;
   }
 
-  currentImageIndex = currentImageIndex % galleryImages.length;
+  try {
+    const data = await apiJsonRequest("/api/gallery", { method: "GET" });
+    const items = Array.isArray(data.items) ? data.items : [];
+    galleryImages = items.map((item, index) => ({
+      src: item.file_url_with_token || `${item.file_url}?token=${encodeURIComponent(currentAuthToken)}`,
+      alt: item.original_name || `gallery-image-${index + 1}`,
+      caption: item.caption || item.original_name || "用户图库图片",
+    }));
+  } catch (error) {
+    galleryImages = [];
+    galleryCaption.textContent = error.message || "读取图库失败。";
+  }
+
+  currentImageIndex = galleryImages.length > 0 ? currentImageIndex % galleryImages.length : 0;
   renderGalleryImage();
+}
+
+async function uploadGalleryImage() {
+  if (!currentAuthToken || !currentAuthUser || currentAuthUser.is_guest) {
+    galleryCaption.textContent = "请先登录正式账号，再上传图片到个人图库。";
+    return;
+  }
+
+  const file = galleryUploadInput?.files?.[0];
+  if (!file) {
+    galleryCaption.textContent = "请先选择一张图片。";
+    return;
+  }
+
+  galleryCaption.textContent = "正在上传图片...";
+  try {
+    const data = await apiUploadRequest("/api/gallery/upload", "image", file, {
+      caption: file.name,
+    });
+    addDebugLog("上传图库图片", data.item || file.name);
+    galleryUploadInput.value = "";
+    await loadGalleryManifest();
+  } catch (error) {
+    galleryCaption.textContent = error.message || "上传图片失败。";
+    addDebugLog("上传图库图片失败", error.data || error.message || "unknown error");
+  }
 }
 
 function handleInteractiveKeydown(event, action) {
@@ -1300,7 +1587,7 @@ function preventPageTextSelection(event) {
 function shouldSkipPageDrag(target) {
   return Boolean(
     target.closest(
-      "input, textarea, [contenteditable='true'], button, a, .mode-switch, .theme-switch, .engine-switch, .section-rail, .interactive-panel, .link-card, .game-entry, canvas"
+      "input, textarea, [contenteditable='true'], button, a, .mode-switch, .theme-switch, .engine-switch, .section-rail, .interactive-panel, .link-card, .game-entry, canvas, .settings-avatar-button"
     )
   );
 }
@@ -1446,6 +1733,7 @@ function positionSegmentHighlight(container, highlight, target, animate = true) 
 }
 
 function createSegmentControl(container, highlight, buttons, onSelect) {
+  buttons = buttons.filter(Boolean);
   if (!container || !highlight || buttons.length === 0) {
     return null;
   }
@@ -1613,6 +1901,7 @@ initializeApiPanel();
 loadDebugLogs();
 renderDebugLogs();
 initializeAuthPanel();
+initializeUserSettings();
 renderQuickLinks();
 updateClock();
 loadMascotQuotes();
@@ -1673,6 +1962,10 @@ galleryPrevButton.addEventListener("click", (event) => {
   event.stopPropagation();
   showPreviousImage();
 });
+galleryUploadButton?.addEventListener("click", () => {
+  galleryUploadInput?.click();
+});
+galleryUploadInput?.addEventListener("change", uploadGalleryImage);
 galleryImage.addEventListener("error", handleGalleryImageError);
 galleryLightboxImage.addEventListener("error", closeGalleryLightbox);
 galleryZoomButton.addEventListener("click", (event) => {

@@ -14,12 +14,27 @@
         <div>
           <p class="eyebrow" id="booksHeaderEyebrow">BOOKS</p>
           <h1 id="booksHeaderTitle">书库</h1>
-          <p class="books-copy" id="booksHeaderCopy">这里后面用来放电子书、段落池和阅读器相关内容。当前先搭最小框架。</p>
+          <p class="books-copy" id="booksHeaderCopy">这里展示当前登录用户的 EPUB 书库，可以直接上传并进入阅读。</p>
         </div>
         <div class="books-actions">
           <a class="books-link" id="booksBackHomeLink" href="../index.html">返回主页</a>
         </div>
       </header>
+
+      <section class="books-upload-stage glass-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">UPLOAD</p>
+            <h2>上传 EPUB</h2>
+          </div>
+          <p class="books-copy">书会自动归到当前用户名下，后面继续扩展章节和正文解析。</p>
+        </div>
+        <div class="books-upload-actions">
+          <input id="booksUploadInput" type="file" accept=".epub,application/epub+zip" hidden />
+          <button id="booksUploadButton" class="books-link" type="button">选择 EPUB 并上传</button>
+        </div>
+        <p id="booksUploadResult" class="books-copy">等待上传。</p>
+      </section>
 
       <section class="books-library-stage glass-panel">
           <div class="section-heading">
