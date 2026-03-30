@@ -157,7 +157,13 @@ const enginePills = document.querySelectorAll(".engine-pill");
 const apiBaseInput = document.getElementById("apiBaseInput");
 const apiSaveButton = document.getElementById("apiSaveButton");
 const apiHealthButton = document.getElementById("apiHealthButton");
+const apiModalButton = document.getElementById("apiModalButton");
 const apiStatusText = document.getElementById("apiStatusText");
+const apiResultModal = document.getElementById("apiResultModal");
+const apiResultBackdrop = document.getElementById("apiResultBackdrop");
+const apiResultTitle = document.getElementById("apiResultTitle");
+const apiResultBody = document.getElementById("apiResultBody");
+const apiResultClose = document.getElementById("apiResultClose");
 const galleryFrame = document.getElementById("galleryFrame");
 const galleryPrevButton = document.getElementById("galleryPrevButton");
 const galleryZoomButton = document.getElementById("galleryZoomButton");
@@ -236,6 +242,51 @@ async function testApiHealth() {
     apiStatusText.textContent = `连通成功：${JSON.stringify(data)}`;
   } catch (error) {
     apiStatusText.textContent = `请求失败：${error instanceof Error ? error.message : "unknown error"}`;
+  }
+}
+
+function openApiResultModal(title, body) {
+  apiResultTitle.textContent = title;
+  apiResultBody.textContent = body;
+  apiResultModal.classList.add("is-open");
+  apiResultModal.setAttribute("aria-hidden", "false");
+}
+
+function closeApiResultModal() {
+  apiResultModal.classList.remove("is-open");
+  apiResultModal.setAttribute("aria-hidden", "true");
+}
+
+async function testApiHealthWithModal() {
+  const apiBase = normalizeApiBase(apiBaseInput?.value || "");
+
+  if (!apiBase) {
+    openApiResultModal("连接失败", "请先填写正式 API 域名。");
+    return;
+  }
+
+  openApiResultModal("正在测试", `正在请求：${apiBase}/health`);
+
+  try {
+    const response = await fetch(`${apiBase}/health`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      openApiResultModal("连接失败", `HTTP ${response.status}`);
+      return;
+    }
+
+    const data = await response.json();
+    openApiResultModal("连接成功", JSON.stringify(data, null, 2));
+  } catch (error) {
+    openApiResultModal(
+      "请求失败",
+      error instanceof Error ? error.message : "unknown error"
+    );
   }
 }
 
@@ -416,6 +467,9 @@ function initializeApiPanel() {
   });
 
   apiHealthButton?.addEventListener("click", testApiHealth);
+  apiModalButton?.addEventListener("click", testApiHealthWithModal);
+  apiResultClose?.addEventListener("click", closeApiResultModal);
+  apiResultBackdrop?.addEventListener("click", closeApiResultModal);
 }
 
 function updateClock() {

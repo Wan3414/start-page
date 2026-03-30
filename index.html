@@ -112,6 +112,7 @@
               <div class="api-test-actions">
                 <button id="apiSaveButton" class="subtle-button" type="button">保存地址</button>
                 <button id="apiHealthButton" class="primary-button" type="button">测试 /health</button>
+                <button id="apiModalButton" class="subtle-button" type="button">弹窗测试</button>
               </div>
             </div>
 
@@ -202,6 +203,16 @@
       <button id="galleryLightboxClose" class="gallery-lightbox-close" type="button" aria-label="关闭放大预览">关闭</button>
       <img id="galleryLightboxImage" class="gallery-lightbox-image" src="" alt="" />
       <p id="galleryLightboxCaption" class="gallery-lightbox-caption"></p>
+    </div>
+
+    <div id="apiResultModal" class="api-result-modal" aria-hidden="true">
+      <div class="api-result-backdrop" id="apiResultBackdrop"></div>
+      <div class="api-result-panel glass-card" role="dialog" aria-modal="true" aria-labelledby="apiResultTitle">
+        <span class="mini-label">API STATUS</span>
+        <strong id="apiResultTitle" class="api-result-title">连接结果</strong>
+        <p id="apiResultBody" class="api-result-body">等待测试。</p>
+        <button id="apiResultClose" class="primary-button" type="button">关闭</button>
+      </div>
     </div>
 
     <script src="./script.js"></script>
