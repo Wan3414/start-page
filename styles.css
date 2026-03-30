@@ -132,6 +132,8 @@ a,
 .interactive-panel,
 .link-card,
 .game-entry,
+.mode-switch,
+.mode-button,
 .theme-switch,
 .theme-button,
 .engine-switch,
@@ -175,11 +177,18 @@ body::before {
   overflow: hidden;
 }
 
-.theme-switch {
+.top-switches {
   position: fixed;
   top: 18px;
   right: 20px;
   z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-switch,
+.mode-switch {
   display: inline-flex;
   gap: 6px;
   padding: 6px;
@@ -199,6 +208,7 @@ body::before {
 }
 
 .theme-switch::before,
+.mode-switch::before,
 .engine-switch::before {
   content: "";
   position: absolute;
@@ -212,6 +222,7 @@ body::before {
 }
 
 .theme-switch::after,
+.mode-switch::after,
 .engine-switch::after {
   content: "";
   position: absolute;
@@ -344,7 +355,8 @@ body[data-theme="light"] .rail-dot::after {
     0 12px 30px rgba(21, 29, 43, 0.08);
 }
 
-.theme-button {
+.theme-button,
+.mode-button {
   position: relative;
   z-index: 1;
   min-height: 34px;
@@ -363,12 +375,15 @@ body[data-theme="light"] .rail-dot::after {
 }
 
 .theme-button:hover,
-.theme-button:focus-visible {
+.theme-button:focus-visible,
+.mode-button:hover,
+.mode-button:focus-visible {
   transform: translateY(-1px);
   outline: none;
 }
 
-.theme-button.is-active {
+.theme-button.is-active,
+.mode-button.is-active {
   color: #12161d;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.14);
 }
@@ -381,7 +396,16 @@ body[data-theme="light"] .theme-switch {
     var(--liquid-shell-shadow);
 }
 
-body[data-theme="light"] .theme-button.is-active {
+body[data-theme="light"] .mode-switch {
+  background: var(--liquid-shell-bg);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-shell-highlight),
+    inset 0 0 0 1px var(--liquid-shell-border),
+    var(--liquid-shell-shadow);
+}
+
+body[data-theme="light"] .theme-button.is-active,
+body[data-theme="light"] .mode-button.is-active {
   color: #fff;
 }
 
@@ -899,6 +923,27 @@ body[data-theme="light"] .search-panel.is-strong-typing {
   padding: 22px;
 }
 
+.developer-only-card {
+  transition:
+    opacity 180ms ease,
+    transform 220ms ease,
+    max-height 220ms ease,
+    margin 220ms ease,
+    padding 220ms ease;
+  overflow: hidden;
+}
+
+body[data-app-mode="user"] .developer-only-card {
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  max-height: 0;
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-width: 0;
+}
+
 .api-test-form {
   display: grid;
   gap: 12px;
@@ -962,7 +1007,7 @@ body[data-theme="light"] .search-panel.is-strong-typing {
 .api-result-panel {
   position: relative;
   z-index: 1;
-  width: min(100%, 420px);
+  width: min(100%, 680px);
   padding: 24px;
   border-radius: 28px;
 }
@@ -978,6 +1023,8 @@ body[data-theme="light"] .search-panel.is-strong-typing {
 .api-result-body {
   margin: 14px 0 0;
   color: var(--text-soft);
+  font-family: "SFMono-Regular", "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+  font-size: 0.94rem;
   line-height: 1.75;
   white-space: pre-wrap;
   word-break: break-word;
@@ -1019,21 +1066,25 @@ body[data-theme="light"] .engine-switch {
 }
 
 .theme-switch.is-pressing .segment-highlight,
+.mode-switch.is-pressing .segment-highlight,
 .engine-switch.is-pressing .segment-highlight {
   transform: scaleX(calc(var(--liquid-bubble-scale) * 1.04)) scaleY(0.94);
 }
 
 .theme-button:hover,
+.mode-button:hover,
 .engine-pill:hover {
   color: rgba(243, 246, 251, 0.88);
 }
 
 body[data-theme="light"] .theme-button:hover,
+body[data-theme="light"] .mode-button:hover,
 body[data-theme="light"] .engine-pill:hover {
   color: rgba(32, 38, 47, 0.8);
 }
 
 .theme-switch:focus-within,
+.mode-switch:focus-within,
 .engine-switch:focus-within {
   box-shadow:
     inset 0 1px 0 var(--liquid-shell-highlight),
@@ -1045,6 +1096,7 @@ body[data-theme="light"] .engine-pill:hover {
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .theme-switch,
+  .mode-switch,
   .engine-switch,
   .segment-highlight {
     backdrop-filter: none;
@@ -1052,11 +1104,13 @@ body[data-theme="light"] .engine-pill:hover {
   }
 
   .theme-switch,
+  .mode-switch,
   .engine-switch {
     background: rgba(34, 40, 52, 0.82);
   }
 
   body[data-theme="light"] .theme-switch,
+  body[data-theme="light"] .mode-switch,
   body[data-theme="light"] .engine-switch {
     background: rgba(255, 255, 255, 0.88);
   }
@@ -1559,9 +1613,16 @@ body[data-theme="light"] .ripple-wave {
     padding: 18px 14px 42px;
   }
 
-  .theme-switch {
+  .top-switches {
     top: 12px;
     right: 14px;
+    gap: 10px;
+  }
+
+  .theme-switch,
+  .mode-switch {
+    transform: scale(0.96);
+    transform-origin: top right;
   }
 
   .section-rail {
@@ -1618,6 +1679,12 @@ body[data-theme="light"] .ripple-wave {
 }
 
 @media (max-width: 560px) {
+  .top-switches {
+    top: 10px;
+    right: 10px;
+    gap: 8px;
+  }
+
   .section-rail {
     top: auto;
     bottom: 18px;

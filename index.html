@@ -22,10 +22,18 @@
       <div class="ambient ambient-top"></div>
       <div class="ambient ambient-bottom"></div>
 
-      <div class="theme-switch" role="group" aria-label="主题切换">
-        <span class="segment-highlight" aria-hidden="true"></span>
-        <button id="themeDarkButton" class="theme-button is-active" type="button" aria-pressed="true">Dark</button>
-        <button id="themeLightButton" class="theme-button" type="button" aria-pressed="false">Light</button>
+      <div class="top-switches">
+        <div class="mode-switch" role="group" aria-label="页面模式切换">
+          <span class="segment-highlight" aria-hidden="true"></span>
+          <button id="userModeButton" class="mode-button is-active" type="button" aria-pressed="true">使用者</button>
+          <button id="developerModeButton" class="mode-button" type="button" aria-pressed="false">开发者</button>
+        </div>
+
+        <div class="theme-switch" role="group" aria-label="主题切换">
+          <span class="segment-highlight" aria-hidden="true"></span>
+          <button id="themeDarkButton" class="theme-button is-active" type="button" aria-pressed="true">Dark</button>
+          <button id="themeLightButton" class="theme-button" type="button" aria-pressed="false">Light</button>
+        </div>
       </div>
 
       <nav class="section-rail" aria-label="页面导航">
@@ -90,7 +98,7 @@
             <button class="engine-pill" type="button" data-engine="baidu">Baidu</button>
           </div>
 
-          <article class="glass-card api-test-card">
+          <article class="glass-card api-test-card developer-only-card" id="apiTestCard">
             <div class="section-heading compact">
               <div>
                 <p class="eyebrow">API LINK</p>

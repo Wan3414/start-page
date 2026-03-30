@@ -5,6 +5,7 @@ const SEARCH_ENGINES = {
 };
 
 const THEME_STORAGE_KEY = "wan-start-page-theme";
+const APP_MODE_STORAGE_KEY = "wan-start-page-mode";
 const API_BASE_STORAGE_KEY = "wan-start-page-api-base";
 const DEFAULT_API_BASE = "";
 
@@ -133,6 +134,10 @@ const FALLBACK_GALLERY_IMAGES = [
 ];
 
 const body = document.body;
+const modeSwitch = document.querySelector(".mode-switch");
+const modeHighlight = modeSwitch?.querySelector(".segment-highlight");
+const userModeButton = document.getElementById("userModeButton");
+const developerModeButton = document.getElementById("developerModeButton");
 const themeSwitch = document.querySelector(".theme-switch");
 const themeHighlight = themeSwitch.querySelector(".segment-highlight");
 const themeDarkButton = document.getElementById("themeDarkButton");
@@ -164,6 +169,7 @@ const apiResultBackdrop = document.getElementById("apiResultBackdrop");
 const apiResultTitle = document.getElementById("apiResultTitle");
 const apiResultBody = document.getElementById("apiResultBody");
 const apiResultClose = document.getElementById("apiResultClose");
+const apiTestCard = document.getElementById("apiTestCard");
 const galleryFrame = document.getElementById("galleryFrame");
 const galleryPrevButton = document.getElementById("galleryPrevButton");
 const galleryZoomButton = document.getElementById("galleryZoomButton");
@@ -186,6 +192,7 @@ let currentImageIndex = 0;
 let detailedClockEnabled = false;
 let currentFocusPeriod = "";
 let themeSegmentControl;
+let modeSegmentControl;
 let engineSegmentControl;
 let pageDragState = null;
 let mascotReactionTimer = 0;
@@ -279,18 +286,76 @@ function closeApiResultModal() {
   apiResultModal.setAttribute("aria-hidden", "true");
 }
 
+function buildApiDebugText({
+  apiBase,
+  requestUrl,
+  response,
+  data,
+  error,
+}) {
+  const lines = [
+    `页面地址: ${window.location.href}`,
+    `页面来源: ${window.location.origin}`,
+    `页面协议: ${window.location.protocol}`,
+    `后端地址: ${apiBase || "(empty)"}`,
+    `请求地址: ${requestUrl || "(empty)"}`,
+    `浏览器在线状态: ${navigator.onLine ? "online" : "offline"}`,
+    `安全上下文: ${window.isSecureContext ? "yes" : "no"}`,
+  ];
+
+  if (response) {
+    lines.push(`HTTP 状态: ${response.status} ${response.statusText}`);
+    lines.push(`响应类型: ${response.type || "unknown"}`);
+    lines.push(`最终地址: ${response.url || requestUrl}`);
+  }
+
+  if (data !== undefined) {
+    lines.push("");
+    lines.push("返回 JSON:");
+    lines.push(JSON.stringify(data, null, 2));
+  }
+
+  if (error) {
+    lines.push("");
+    lines.push(`错误信息: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  const isHttpsPage = window.location.protocol === "https:";
+  const isHttpApi = /^http:\/\//i.test(apiBase || "");
+
+  if (isHttpsPage && isHttpApi) {
+    lines.push("");
+    lines.push("可能原因:");
+    lines.push("- 当前页面是 HTTPS，但后端地址是 HTTP，浏览器会拦截混合内容请求。");
+    lines.push("- 解决方式：后端也改成 HTTPS，或当前页面先用 HTTP 测试。");
+  } else if (error) {
+    lines.push("");
+    lines.push("可能原因:");
+    lines.push("- 后端进程未启动，或 8000 端口未监听。");
+    lines.push("- 浏览器访问的主机和后端实际监听主机不一致。");
+    lines.push("- CORS 未放行当前页面来源。");
+    lines.push("- 服务器防火墙 / 反向代理未放通请求。");
+  }
+
+  return lines.join("\n");
+}
+
 async function testApiHealthWithModal() {
   const apiBase = normalizeApiBase(apiBaseInput?.value || "");
+  const requestUrl = `${apiBase}/health`;
 
   if (!apiBase) {
     openApiResultModal("连接失败", "请先填写或确认后端地址。");
     return;
   }
 
-  openApiResultModal("正在测试", `正在请求：${apiBase}/health`);
+  openApiResultModal("正在测试", buildApiDebugText({
+    apiBase,
+    requestUrl,
+  }));
 
   try {
-    const response = await fetch(`${apiBase}/health`, {
+    const response = await fetch(requestUrl, {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -298,17 +363,35 @@ async function testApiHealthWithModal() {
     });
 
     if (!response.ok) {
-      openApiResultModal("连接失败", `HTTP ${response.status}`);
+      let responseText = "";
+      try {
+        responseText = await response.text();
+      } catch (readError) {
+        responseText = "";
+      }
+
+      openApiResultModal("连接失败", buildApiDebugText({
+        apiBase,
+        requestUrl,
+        response,
+        error: responseText || `HTTP ${response.status}`,
+      }));
       return;
     }
 
     const data = await response.json();
-    openApiResultModal("连接成功", JSON.stringify(data, null, 2));
+    openApiResultModal("连接成功", buildApiDebugText({
+      apiBase,
+      requestUrl,
+      response,
+      data,
+    }));
   } catch (error) {
-    openApiResultModal(
-      "请求失败",
-      error instanceof Error ? error.message : "unknown error"
-    );
+    openApiResultModal("请求失败", buildApiDebugText({
+      apiBase,
+      requestUrl,
+      error,
+    }));
   }
 }
 
@@ -431,6 +514,31 @@ function setTheme(theme) {
   }
 }
 
+function setAppMode(mode) {
+  const nextMode = mode === "developer" ? "developer" : "user";
+  body.dataset.appMode = nextMode;
+
+  userModeButton?.classList.toggle("is-active", nextMode === "user");
+  developerModeButton?.classList.toggle("is-active", nextMode === "developer");
+  userModeButton?.setAttribute("aria-pressed", String(nextMode === "user"));
+  developerModeButton?.setAttribute("aria-pressed", String(nextMode === "developer"));
+
+  if (apiTestCard) {
+    apiTestCard.setAttribute("aria-hidden", String(nextMode !== "developer"));
+  }
+
+  try {
+    window.localStorage.setItem(APP_MODE_STORAGE_KEY, nextMode);
+  } catch (error) {
+    // Ignore storage failures and keep the UI usable.
+  }
+
+  if (modeSegmentControl) {
+    const targetButton = nextMode === "developer" ? developerModeButton : userModeButton;
+    modeSegmentControl.snapTo(targetButton);
+  }
+}
+
 function getTimePeriod(hour) {
   if (hour < 11) {
     return "morning";
@@ -469,6 +577,20 @@ function initializeTheme() {
   }
 
   setTheme("dark");
+}
+
+function initializeAppMode() {
+  try {
+    const savedMode = window.localStorage.getItem(APP_MODE_STORAGE_KEY);
+    if (savedMode === "developer" || savedMode === "user") {
+      setAppMode(savedMode);
+      return;
+    }
+  } catch (error) {
+    // Ignore storage failures and use the default user mode.
+  }
+
+  setAppMode("user");
 }
 
 function initializeApiPanel() {
@@ -805,7 +927,7 @@ function preventPageTextSelection(event) {
 function shouldSkipPageDrag(target) {
   return Boolean(
     target.closest(
-      "input, textarea, [contenteditable='true'], button, a, .theme-switch, .engine-switch, .section-rail, .interactive-panel, .link-card, .game-entry, canvas"
+      "input, textarea, [contenteditable='true'], button, a, .mode-switch, .theme-switch, .engine-switch, .section-rail, .interactive-panel, .link-card, .game-entry, canvas"
     )
   );
 }
@@ -1113,12 +1235,20 @@ function createSegmentControl(container, highlight, buttons, onSelect) {
 }
 
 initializeTheme();
+initializeAppMode();
 initializeApiPanel();
 renderQuickLinks();
 updateClock();
 loadMascotQuotes();
 loadGalleryManifest();
 initializeRipples();
+
+modeSegmentControl = createSegmentControl(
+  modeSwitch,
+  modeHighlight,
+  [userModeButton, developerModeButton],
+  (button) => setAppMode(button === developerModeButton ? "developer" : "user")
+);
 
 themeSegmentControl = createSegmentControl(
   themeSwitch,
@@ -1134,6 +1264,7 @@ engineSegmentControl = createSegmentControl(
   (button) => setActiveEngine(button.dataset.engine)
 );
 
+modeSegmentControl?.refresh();
 themeSegmentControl?.refresh();
 engineSegmentControl?.refresh();
 setInterval(updateClock, 250);
