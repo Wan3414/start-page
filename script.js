@@ -1423,6 +1423,10 @@ async function loadMascotQuotes() {
 }
 
 function renderGalleryImage() {
+  if (!galleryImage || !galleryCaption) {
+    return;
+  }
+
   if (galleryImages.length === 0) {
     galleryImage.removeAttribute("src");
     galleryImage.alt = "当前没有图库图片";
@@ -1439,6 +1443,10 @@ function renderGalleryImage() {
 }
 
 function showNextImage() {
+  if (!galleryImage || !galleryCaption) {
+    return;
+  }
+
   if (galleryImages.length === 0) {
     return;
   }
@@ -1448,6 +1456,10 @@ function showNextImage() {
 }
 
 function showPreviousImage() {
+  if (!galleryImage || !galleryCaption) {
+    return;
+  }
+
   if (galleryImages.length === 0) {
     return;
   }
@@ -1457,6 +1469,10 @@ function showPreviousImage() {
 }
 
 function openGalleryLightbox() {
+  if (!galleryLightbox || !galleryLightboxImage || !galleryLightboxCaption) {
+    return;
+  }
+
   if (galleryImages.length === 0) {
     return;
   }
@@ -1470,11 +1486,19 @@ function openGalleryLightbox() {
 }
 
 function closeGalleryLightbox() {
+  if (!galleryLightbox) {
+    return;
+  }
+
   galleryLightbox.classList.remove("is-open");
   galleryLightbox.setAttribute("aria-hidden", "true");
 }
 
 function handleGalleryImageError() {
+  if (!galleryCaption) {
+    return;
+  }
+
   if (galleryImages.length <= 1) {
     galleryCaption.textContent = "图片加载失败，请检查当前用户图库文件和后端接口。";
     return;
@@ -1521,6 +1545,10 @@ function moveMascotEyes(event) {
 }
 
 async function loadGalleryManifest() {
+  if (!galleryImage || !galleryCaption) {
+    return;
+  }
+
   if (!currentAuthToken || !currentAuthUser || currentAuthUser.is_guest) {
     galleryImages = [];
     currentImageIndex = 0;
@@ -1532,7 +1560,10 @@ async function loadGalleryManifest() {
     const data = await apiJsonRequest("/api/gallery", { method: "GET" });
     const items = Array.isArray(data.items) ? data.items : [];
     galleryImages = items.map((item, index) => ({
-      src: item.file_url_with_token || `${item.file_url}?token=${encodeURIComponent(currentAuthToken)}`,
+      src:
+        item.public_url ||
+        item.file_url_with_token ||
+        `${item.file_url}?token=${encodeURIComponent(currentAuthToken)}`,
       alt: item.original_name || `gallery-image-${index + 1}`,
       caption: item.caption || item.original_name || "用户图库图片",
     }));
@@ -1546,6 +1577,10 @@ async function loadGalleryManifest() {
 }
 
 async function uploadGalleryImage() {
+  if (!galleryCaption) {
+    return;
+  }
+
   if (!currentAuthToken || !currentAuthUser || currentAuthUser.is_guest) {
     galleryCaption.textContent = "请先登录正式账号，再上传图片到个人图库。";
     return;
@@ -2047,9 +2082,9 @@ timeCard.addEventListener("keydown", (event) =>
 );
 focusCard.addEventListener("click", () => refreshFocus());
 focusCard.addEventListener("keydown", (event) => handleInteractiveKeydown(event, () => refreshFocus()));
-galleryFrame.addEventListener("click", showNextImage);
-galleryFrame.addEventListener("keydown", (event) => handleInteractiveKeydown(event, showNextImage));
-galleryPrevButton.addEventListener("click", (event) => {
+galleryFrame?.addEventListener("click", showNextImage);
+galleryFrame?.addEventListener("keydown", (event) => handleInteractiveKeydown(event, showNextImage));
+galleryPrevButton?.addEventListener("click", (event) => {
   event.stopPropagation();
   showPreviousImage();
 });
@@ -2057,14 +2092,14 @@ galleryUploadButton?.addEventListener("click", () => {
   galleryUploadInput?.click();
 });
 galleryUploadInput?.addEventListener("change", uploadGalleryImage);
-galleryImage.addEventListener("error", handleGalleryImageError);
-galleryLightboxImage.addEventListener("error", closeGalleryLightbox);
-galleryZoomButton.addEventListener("click", (event) => {
+galleryImage?.addEventListener("error", handleGalleryImageError);
+galleryLightboxImage?.addEventListener("error", closeGalleryLightbox);
+galleryZoomButton?.addEventListener("click", (event) => {
   event.stopPropagation();
   openGalleryLightbox();
 });
-galleryLightboxClose.addEventListener("click", closeGalleryLightbox);
-galleryLightbox.addEventListener("click", (event) => {
+galleryLightboxClose?.addEventListener("click", closeGalleryLightbox);
+galleryLightbox?.addEventListener("click", (event) => {
   if (event.target === galleryLightbox) {
     closeGalleryLightbox();
   }

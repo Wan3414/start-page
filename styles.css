@@ -1094,6 +1094,9 @@ body[data-app-mode="user"] .developer-only-card {
   position: relative;
   z-index: 1;
   width: min(100%, 560px);
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 28px;
   border-radius: 30px;
 }
@@ -1858,6 +1861,40 @@ body[data-theme="light"] .ripple-wave {
 }
 
 @media (max-width: 640px) {
+  .auth-gate-modal {
+    padding: 12px;
+    place-items: stretch;
+  }
+
+  .auth-gate-panel {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    margin: auto 0;
+    padding: 20px 18px;
+    border-radius: 24px;
+  }
+
+  .auth-gate-title {
+    font-size: 1.35rem;
+    line-height: 1.15;
+  }
+
+  .auth-gate-copy {
+    line-height: 1.6;
+    font-size: 0.96rem;
+  }
+
+  .auth-gate-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .auth-gate-debug-body {
+    font-size: 0.82rem;
+    line-height: 1.55;
+  }
+
   .layout {
     padding: 18px 14px 42px;
   }

@@ -139,22 +139,11 @@
                   <h2>图库</h2>
                 </div>
               </div>
-
-              <div class="gallery-upload-actions">
-                <input id="galleryUploadInput" type="file" accept="image/*" hidden />
-                <button id="galleryUploadButton" class="subtle-button" type="button">上传图片</button>
-              </div>
-
-              <div class="gallery-frame interactive-panel" id="galleryFrame" role="button" tabindex="0" aria-label="点击切换图片">
-                <button id="galleryPrevButton" class="gallery-nav-button gallery-prev-button" type="button" aria-label="查看上一张图片">
-                  上一张
-                </button>
-                <button id="galleryZoomButton" class="gallery-zoom-button" type="button" aria-label="放大查看当前图片">
-                  放大
-                </button>
-                <img id="galleryImage" src="./assets/gallery/hero-reference.jpg" alt="Gallery preview" />
-              </div>
-              <p id="galleryCaption" class="section-copy gallery-caption">当前图库为空时，这里会提示先登录并上传图片。</p>
+              <a class="game-entry" href="./gallery/index.html">
+                <span class="mini-label">MEDIA</span>
+                <strong>进入图库</strong>
+                <span class="quote-meta">查看全部图片、单张放大、上传和删除都放到独立图库页里。</span>
+              </a>
             </article>
 
             <article class="glass-card widget-card">
@@ -218,12 +207,6 @@
           alt="右下角互动小人"
         />
       </button>
-    </div>
-
-    <div id="galleryLightbox" class="gallery-lightbox" aria-hidden="true">
-      <button id="galleryLightboxClose" class="gallery-lightbox-close" type="button" aria-label="关闭放大预览">关闭</button>
-      <img id="galleryLightboxImage" class="gallery-lightbox-image" src="" alt="" />
-      <p id="galleryLightboxCaption" class="gallery-lightbox-caption"></p>
     </div>
 
     <div id="apiResultModal" class="api-result-modal" aria-hidden="true">

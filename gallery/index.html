@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>图库</title>
+    <link rel="icon" href="../assets/icons/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body data-theme="dark">
+    <div class="gallery-page-shell">
+      <header class="gallery-page-header liquid-panel">
+        <div>
+          <p class="eyebrow">GALLERY</p>
+          <h1>图库</h1>
+          <p class="section-copy">概览全部图片，支持上传、单选放大和删除。</p>
+        </div>
+        <div class="header-actions">
+          <a class="subtle-button" href="../index.html">返回主页</a>
+          <a class="subtle-button" href="../personal/index.html">个人页面</a>
+        </div>
+      </header>
+
+      <section class="gallery-toolbar liquid-panel">
+        <div class="toolbar-actions">
+          <input id="galleryUploadInput" type="file" accept="image/*" hidden />
+          <button id="galleryUploadButton" class="subtle-button" type="button">上传图片</button>
+          <button id="galleryDeleteButton" class="subtle-button" type="button">删除当前选中</button>
+          <button id="galleryReloadButton" class="subtle-button" type="button">刷新列表</button>
+        </div>
+        <p id="galleryStatusText" class="status-text">请先登录正式账号，再管理个人图库。</p>
+        <p class="toolbar-tip">单击卡片选中，点“预览”查看大图，再点“删除当前选中”删除。</p>
+      </section>
+
+      <section class="gallery-grid" id="galleryGrid"></section>
+    </div>
+
+    <div id="galleryLightbox" class="gallery-lightbox" aria-hidden="true">
+      <div class="gallery-lightbox-backdrop"></div>
+      <div class="gallery-lightbox-panel liquid-panel">
+        <div class="gallery-lightbox-head">
+          <strong id="galleryLightboxTitle">图片预览</strong>
+          <button id="galleryLightboxClose" class="subtle-button" type="button">关闭</button>
+        </div>
+        <img id="galleryLightboxImage" class="gallery-lightbox-image" src="" alt="" />
+        <p id="galleryLightboxCaption" class="gallery-lightbox-caption"></p>
+      </div>
+    </div>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
